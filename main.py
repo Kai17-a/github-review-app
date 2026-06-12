@@ -139,7 +139,9 @@ def fetch_pr_diff_files(settings: dict) -> str:
 
 def read_diff() -> str:
     if not sys.stdin.isatty():
-        return sys.stdin.read()
+        stdin_diff = sys.stdin.read()
+        if stdin_diff.strip():
+            return stdin_diff
 
     if os.environ.get("GITHUB_ACTIONS") == "true":
         return fetch_pr_diff_files(get_github_settings())
