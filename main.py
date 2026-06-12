@@ -176,8 +176,8 @@ def truncate_diff(diff: str, max_chars: int) -> str:
 
 
 def get_api_settings() -> tuple[str, str]:
-    base_url = get_env("SAKURA_AI_URL")
-    api_key = get_env("SAKURA_AI_API_KEY")
+    base_url = get_env("LLM_API_BASE_URL")
+    api_key = get_env("LLM_API_KEY")
     endpoint = f"{base_url.rstrip('/')}/chat/completions"
     return endpoint, api_key
 

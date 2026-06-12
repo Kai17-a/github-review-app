@@ -17,6 +17,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          SAKURA_AI_URL: ${{ secrets.SAKURA_AI_URL }}
-          SAKURA_AI_API_KEY: ${{ secrets.SAKURA_AI_API_KEY }}
+          LLM_API_BASE_URL: ${{ secrets.LLM_API_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}
