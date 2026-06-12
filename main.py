@@ -37,14 +37,17 @@ def http_request(
     *,
     method: str = "GET",
     token: str | None = None,
+    auth_header: str = "Authorization",
     data: dict | None = None,
     accept: str = "application/vnd.github+json",
 ) -> tuple[int, str]:
     body = None
     headers = {"Accept": accept}
     if token:
-        # headers["Authorization"] = f"Bearer {token}"
-        headers["apiKey"] = token
+        if auth_header == "Authorization":
+            headers[auth_header] = f"Bearer {token}"
+        else:
+            headers[auth_header] = token
     if data is not None:
         body = json.dumps(data).encode("utf-8")
         headers["Content-Type"] = "application/json"
@@ -212,6 +215,7 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
         endpoint,
         method="POST",
         token=api_key,
+        auth_header="apiKey",
         data=payload,
         accept="application/json",
     )
