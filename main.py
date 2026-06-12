@@ -44,6 +44,12 @@ def http_request(
     body = None
     headers = {"Accept": accept}
     if token:
+        if (
+            not auth_header
+            or not auth_header.isascii()
+            or any(char in auth_header for char in ":\r\n")
+        ):
+            raise ValueError(f"Invalid auth_header: {auth_header!r}")
         if auth_header == "Authorization":
             headers[auth_header] = f"Bearer {token}"
         else:
@@ -144,7 +150,7 @@ def fetch_pr_diff_files(settings: dict) -> str:
 def read_diff() -> str:
     if not sys.stdin.isatty():
         stdin_diff = sys.stdin.read()
-        if stdin_diff.strip():
+        if stdin_diff:
             return stdin_diff
 
     if os.environ.get("GITHUB_ACTIONS") == "true":

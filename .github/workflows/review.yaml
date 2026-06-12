@@ -19,4 +19,4 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           SAKURA_AI_URL: ${{ secrets.SAKURA_AI_URL }}
           SAKURA_AI_API_KEY: ${{ secrets.SAKURA_AI_API_KEY }}
-          REVIEW_MODEL: ${{ vars.REVIEW_MODEL }}
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}
