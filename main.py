@@ -43,7 +43,8 @@ def http_request(
     body = None
     headers = {"Accept": accept}
     if token:
-        headers["Authorization"] = f"Bearer {token}"
+        # headers["Authorization"] = f"Bearer {token}"
+        headers["apiKey"] = token
     if data is not None:
         body = json.dumps(data).encode("utf-8")
         headers["Content-Type"] = "application/json"
@@ -237,11 +238,7 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
 
 
 def build_review_body(review: str) -> str:
-    return (
-        f"{REVIEW_HEADER}\n"
-        f"## AI Review\n\n"
-        f"{review}\n"
-    )
+    return f"{REVIEW_HEADER}\n## AI Review\n\n{review}\n"
 
 
 def submit_pr_review(settings: dict, body: str) -> None:
