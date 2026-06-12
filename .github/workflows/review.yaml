@@ -1,22 +1,22 @@
 on:
-  pull_request:
-    types: [opened, synchronize]
+    pull_request:
+        types: [opened, synchronize]
 
 jobs:
-  review:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python main.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          SAKURA_AI_URL: ${{ secrets.SAKURA_AI_URL }}
-          SAKURA_AI_API_KEY: ${{ secrets.SAKURA_AI_API_KEY }}
-          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'qwen2.5-coder:14b' }}
+    review:
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+            contents: read
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
+            - run: python main.py
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  SAKURA_AI_URL: ${{ secrets.SAKURA_AI_URL }}
+                  SAKURA_AI_API_KEY: ${{ secrets.SAKURA_AI_API_KEY }}
+                  REVIEW_MODEL: ${{ vars.REVIEW_MODEL }}
