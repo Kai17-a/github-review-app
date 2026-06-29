@@ -14,13 +14,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: ./
         with:
-          python-version: "3.12"
-      - run: python src/main.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          LLM_API_BASE_URL: ${{ secrets.LLM_API_BASE_URL }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}
+          pr-number: ${{ inputs.pr_number }}
+          llm-api-base-url: ${{ secrets.LLM_API_BASE_URL }}
+          llm-api-key: ${{ secrets.LLM_API_KEY }}
+          review-model: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}

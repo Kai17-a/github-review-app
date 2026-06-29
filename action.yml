@@ -1,0 +1,46 @@
+name: AI Pull Request Review
+description: Review a pull request diff with an LLM and post a PR review comment.
+
+inputs:
+  pr-number:
+    description: Pull request number to review.
+    required: true
+  llm-api-base-url:
+    description: OpenAI-compatible LLM API base URL.
+    required: true
+  llm-api-key:
+    description: LLM API key.
+    required: true
+  review-model:
+    description: LLM model name.
+    required: false
+    default: preview/Kimi-K2.6
+  max-diff-chars:
+    description: Maximum number of diff characters sent to the LLM.
+    required: false
+    default: "12000"
+  debug:
+    description: Set to "1" to print LLM request and response debug output.
+    required: false
+    default: "0"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - uses: astral-sh/setup-uv@v5
+
+    - run: uv run --project "$GITHUB_ACTION_PATH" --frozen python "$GITHUB_ACTION_PATH/src/main.py"
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        LLM_API_BASE_URL: ${{ inputs.llm-api-base-url }}
+        LLM_API_KEY: ${{ inputs.llm-api-key }}
+        REVIEW_MODEL: ${{ inputs.review-model }}
+        MAX_DIFF_CHARS: ${{ inputs.max-diff-chars }}
+        REVIEW_DEBUG: ${{ inputs.debug }}

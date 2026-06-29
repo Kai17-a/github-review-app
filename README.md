@@ -15,7 +15,47 @@ Repository variables:
 
 The workflow also uses the default `GITHUB_TOKEN`.
 
-## Run From GitHub Actions
+## Use As A GitHub Action
+
+Use this repository from another workflow with `uses`.
+
+```yaml
+name: AI Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to review
+        required: true
+        type: number
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: your-org/github-review-app@v1
+        with:
+          pr-number: ${{ inputs.pr_number }}
+          llm-api-base-url: ${{ secrets.LLM_API_BASE_URL }}
+          llm-api-key: ${{ secrets.LLM_API_KEY }}
+          review-model: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}
+```
+
+Create a version tag to use `@v1`:
+
+```bash
+git tag v1
+git push origin v1
+```
+
+## Run From This Repository
 
 `.github/workflows/review.yaml` is triggered manually with `workflow_dispatch`.
 
