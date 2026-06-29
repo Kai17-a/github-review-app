@@ -57,7 +57,7 @@ LLM_API_KEY=sk-xxxxx
 Automatically reviews the current Git diff in this repository:
 
 ```bash
-uv run --env-file .env python main.py
+uv run --env-file .env python src/main.py
 ```
 
 ### Review Diff From Stdin
@@ -65,5 +65,5 @@ uv run --env-file .env python main.py
 Reviews a diff passed through standard input:
 
 ```bash
-git diff main...HEAD | uv run --env-file .env python main.py
+git diff main...HEAD | uv run --env-file .env python src/main.py
 ```
