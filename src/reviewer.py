@@ -28,6 +28,14 @@ REVIEW_HEADER = "<!-- ai-review -->"
 
 
 def extract_message_text(message: dict) -> str | None:
+    """chat completion の message から assistant text を取り出す。
+
+    Args:
+        message: chat completion response 内の message object。
+
+    Returns:
+        assistant text が存在する場合はその文字列。存在しない場合は None。
+    """
     fallback = message.get("reasoning_content") or message.get("reasoning")
     content = message.get("content")
 
@@ -50,6 +58,23 @@ def extract_message_text(message: dict) -> str | None:
 
 
 def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool) -> str:
+    """diff のレビューを LLM に依頼する。
+
+    Args:
+        endpoint: chat completions endpoint URL。
+        api_key: LLM API key。
+        model: 使用する model 名。
+        diff: レビュー対象の diff 文字列。
+        debug: request/response の debug 出力を行うかどうか。
+
+    Returns:
+        LLM が生成したレビュー本文。
+
+    Raises:
+        ValueError: LLM API が 2xx 以外の status を返した場合。
+        RuntimeError: response に assistant text が含まれない場合。
+        json.JSONDecodeError: response body が valid JSON ではない場合。
+    """
     payload = {
         "model": model,
         "messages": [
@@ -95,4 +120,12 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
 
 
 def build_review_body(review: str) -> str:
+    """PR review として投稿する Markdown 本文を組み立てる。
+
+    Args:
+        review: LLM が生成したレビュー本文。
+
+    Returns:
+        AI review marker と heading を含む Markdown 本文。
+    """
     return f"{REVIEW_HEADER}\n## AI Review\n\n{review}\n"

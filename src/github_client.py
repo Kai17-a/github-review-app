@@ -11,6 +11,20 @@ def github_request(
     token: str,
     data: dict | None = None,
 ) -> tuple[int, str]:
+    """GitHub API に認証付きリクエストを送信する。
+
+    Args:
+        url: 完全な GitHub API URL。
+        method: 使用する HTTP メソッド。
+        token: Bearer token として送信する GitHub token。
+        data: 任意の JSON payload。
+
+    Returns:
+        HTTP status code と response body text のタプル。
+
+    Raises:
+        RuntimeError: レスポンス受信前にリクエストが失敗した場合。
+    """
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
@@ -31,6 +45,19 @@ def github_request(
 
 
 def fetch_pr_diff_files(settings: dict) -> str:
+    """Pull request の file patch を取得し、diff 文字列として結合する。
+
+    Args:
+        settings: repository、API URL、token、pull request 番号を含む
+            GitHub 設定。
+
+    Returns:
+        file patch から生成した改行区切りの diff 文字列。
+
+    Raises:
+        RuntimeError: GitHub API のレスポンス形式が想定外の場合。
+        json.JSONDecodeError: GitHub response body が valid JSON ではない場合。
+    """
     owner_repo = settings["repository"]
     api_url = settings["api_url"]
     token = settings["token"]
@@ -69,6 +96,16 @@ def fetch_pr_diff_files(settings: dict) -> str:
 
 
 def submit_pr_review(settings: dict, body: str) -> None:
+    """Pull request review comment を投稿する。
+
+    Args:
+        settings: repository、API URL、token、pull request 番号を含む
+            GitHub 設定。
+        body: 投稿する Markdown 形式のレビュー本文。
+
+    Raises:
+        RuntimeError: レスポンス受信前に GitHub リクエストが失敗した場合。
+    """
     url = (
         f"{settings['api_url']}/repos/{settings['repository']}/pulls/"
         f"{settings['pull_number']}/reviews"

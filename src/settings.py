@@ -3,6 +3,17 @@ import os
 
 
 def get_env(name: str) -> str:
+    """必須の環境変数を読み込む。
+
+    Args:
+        name: 環境変数名。
+
+    Returns:
+        環境変数の値。
+
+    Raises:
+        RuntimeError: 環境変数が未設定または空の場合。
+    """
     value = os.environ.get(name)
     if not value:
         raise RuntimeError(f"{name} is not set.")
@@ -10,6 +21,14 @@ def get_env(name: str) -> str:
 
 
 def get_api_settings() -> tuple[str, str]:
+    """環境変数から LLM API 設定を読み込む。
+
+    Returns:
+        chat completions endpoint URL と API key のタプル。
+
+    Raises:
+        RuntimeError: 必須の LLM 設定が不足している場合。
+    """
     base_url = get_env("LLM_API_BASE_URL")
     api_key = get_env("LLM_API_KEY")
     endpoint = f"{base_url.rstrip('/')}/chat/completions"
@@ -17,6 +36,16 @@ def get_api_settings() -> tuple[str, str]:
 
 
 def get_github_settings() -> dict:
+    """環境変数または event payload から GitHub API 設定を読み込む。
+
+    Returns:
+        token、repository、API URL、pull request 番号を含む辞書。
+
+    Raises:
+        RuntimeError: 必須の GitHub 設定または pull request 情報が不足している場合。
+        ValueError: pull request 番号が整数ではない場合。
+        json.JSONDecodeError: GitHub event payload が invalid JSON の場合。
+    """
     token = get_env("GITHUB_TOKEN")
     repository = get_env("GITHUB_REPOSITORY")
     api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")

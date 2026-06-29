@@ -12,6 +12,12 @@ DEFAULT_MAX_DIFF_CHARS = 12_000
 
 
 def main() -> int:
+    """レビュー処理の workflow を実行する。
+
+    Returns:
+        プロセスの終了コード。成功時または空 diff の場合は 0、
+        ハンドリング済みの失敗時は 1。
+    """
     try:
         diff = read_diff()
     except subprocess.CalledProcessError as exc:
