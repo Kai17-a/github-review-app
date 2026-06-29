@@ -1,7 +1,7 @@
 import json
 import sys
 
-from http_client import http_request
+from llm_client import llm_request
 
 SYSTEM_PROMPT = """\
 あなたは経験豊富なコードレビュアーです。提供された git diff をレビューし、以下の観点でフィードバックしてください。
@@ -62,13 +62,10 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
         print(f"POST {endpoint}", file=sys.stderr)
         print(json.dumps(payload, ensure_ascii=False, indent=2), file=sys.stderr)
 
-    status, response_body = http_request(
+    status, response_body = llm_request(
         endpoint,
-        method="POST",
-        token=api_key,
-        auth_header="apiKey",
+        api_key=api_key,
         data=payload,
-        accept="application/json",
     )
 
     if debug:

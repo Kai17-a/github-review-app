@@ -43,8 +43,8 @@ flowchart TD
 
 - `src/main.py`: エントリポイント。全体の制御、終了コード、GitHub Actions 時の投稿制御
 - `src/settings.py`: 環境変数と GitHub/LLM 設定の読み込み
-- `src/http_client.py`: `requests` を使った HTTP リクエスト共通処理
-- `src/github_client.py`: GitHub PR diff 取得と PR review 投稿
+- `src/github_client.py`: GitHub API へのリクエスト、PR diff 取得、PR review 投稿
+- `src/llm_client.py`: LLM API へのリクエスト
 - `src/diff_reader.py`: stdin、GitHub Actions、ローカル git からの diff 取得
 - `src/reviewer.py`: LLM へのレビュー依頼、レスポンス抽出、レビュー本文生成
 
@@ -72,24 +72,17 @@ GitHub Actions で必要な環境変数:
 
 ### HTTP クライアント
 
-`http_request()` は GitHub API と LLM API の両方で使う共通 HTTP ヘルパーです。
+HTTP リクエストは GitHub API 用と LLM API 用で分離しています。認証方式が異なるため、共通の認証ヘッダー切り替え処理は持ちません。
 
-認証ヘッダーの扱い:
-
-- GitHub API はデフォルトの `Authorization: Bearer <token>` を使います。
-- LLM API は `auth_header="apiKey"` を指定し、API key を `apiKey: <token>` として送ります。
-
-`auth_header` は HTTP ヘッダー名として安全な token 形式だけを許可します。これにより、空白、制御文字、コロンなどの不正な文字を含むヘッダー名を拒否します。
+- `github_request()` は `Authorization: Bearer <token>` を使います。
+- `llm_request()` は `apiKey: <token>` を使います。
 
 ```mermaid
 flowchart LR
-    A[http_request] --> B{token がある?}
-    B -->|いいえ| C[認証ヘッダーなし]
-    B -->|はい| D{auth_header は有効?}
-    D -->|いいえ| E[ValueError]
-    D -->|はい| F{auth_header == Authorization?}
-    F -->|はい| G[Authorization: Bearer token]
-    F -->|いいえ| H[auth_header: token]
+    A[GitHub API 呼び出し] --> B[github_request]
+    B --> C[Authorization: Bearer GITHUB_TOKEN]
+    D[LLM API 呼び出し] --> E[llm_request]
+    E --> F[apiKey: LLM_API_KEY]
 ```
 
 ### diff 取得
@@ -202,7 +195,7 @@ flowchart TD
 - LLM API key は GitHub Actions secrets またはローカル `.env` から渡します。
 - GitHub token は `Authorization: Bearer` で送ります。
 - LLM token は対象 API の仕様に合わせて `apiKey` で送ります。
-- カスタム認証ヘッダー名は厳格な token 正規表現で検証します。
+- GitHub API と LLM API で専用クライアントを分け、認証方式の混在を避けます。
 - `REVIEW_DEBUG=1` は payload と response を出力するため、機密情報がログに残る環境では有効化しないでください。
 
 ## 既知の制限
@@ -210,7 +203,7 @@ flowchart TD
 - 大きな diff は token 数ではなく文字数で切り詰めます。
 - GitHub file item に `patch` がない場合、そのファイルはレビュー対象から外れます。
 - 実行ごとに新しい PR review comment を投稿します。既存の `<!-- ai-review -->` コメント更新は行いません。
-- `http_request()` は Python 標準ライブラリのみを使っており、retry や rate limit backoff は実装していません。
+- HTTP クライアントは `requests` を使っていますが、retry や rate limit backoff は実装していません。
 - LLM レスポンス parser は chat-completions 形式を前提にしています。
 
 ## テスト範囲
@@ -219,7 +212,6 @@ flowchart TD
 
 - GitHub API 用 Bearer 認証ヘッダー
 - LLM API 用 `apiKey` 認証ヘッダー
-- 不正な認証ヘッダー名の拒否
 - stdin、GitHub Actions、ローカル diff のフォールバック
 - LLM API の 2xx 以外レスポンス処理
 
