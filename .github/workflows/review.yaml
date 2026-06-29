@@ -1,6 +1,10 @@
 on:
-  pull_request:
-    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number to review"
+        required: true
+        type: number
 
 jobs:
   review:
@@ -16,7 +20,7 @@ jobs:
       - run: python main.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          SAKURA_AI_URL: ${{ secrets.SAKURA_AI_URL }}
-          SAKURA_AI_API_KEY: ${{ secrets.SAKURA_AI_API_KEY }}
-          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'qwen2.5-coder:14b' }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          LLM_API_BASE_URL: ${{ secrets.LLM_API_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}

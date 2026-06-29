@@ -1,0 +1,19 @@
+{
+  "tab_size": 2,
+  "format_on_save": "on",
+  "languages": {
+    "Python": {
+      "tab_size": 4
+    }
+  },
+  "lsp": {
+    "ruff": {
+      "initialization_options": {
+        "line-length": 80,
+        "lint": {
+          "extend-select": ["I"]
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -30,6 +31,7 @@ SYSTEM_PROMPT = """\
 DEFAULT_MODEL = "preview/Kimi-K2.6"
 DEFAULT_MAX_DIFF_CHARS = 12_000
 REVIEW_HEADER = "<!-- ai-review -->"
+_VALID_AUTH_HEADER = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
 
 
 def http_request(
@@ -37,13 +39,21 @@ def http_request(
     *,
     method: str = "GET",
     token: str | None = None,
+    auth_header: str = "Authorization",
     data: dict | None = None,
     accept: str = "application/vnd.github+json",
 ) -> tuple[int, str]:
     body = None
     headers = {"Accept": accept}
     if token:
-        headers["Authorization"] = f"Bearer {token}"
+        if not isinstance(auth_header, str) or not _VALID_AUTH_HEADER.fullmatch(
+            auth_header
+        ):
+            raise ValueError(f"Invalid auth_header: {auth_header!r}")
+        if auth_header == "Authorization":
+            headers[auth_header] = f"Bearer {token}"
+        else:
+            headers[auth_header] = token
     if data is not None:
         body = json.dumps(data).encode("utf-8")
         headers["Content-Type"] = "application/json"
@@ -137,13 +147,7 @@ def fetch_pr_diff_files(settings: dict) -> str:
     return "\n".join(patches)
 
 
-def read_diff() -> str:
-    if not sys.stdin.isatty():
-        return sys.stdin.read()
-
-    if os.environ.get("GITHUB_ACTIONS") == "true":
-        return fetch_pr_diff_files(get_github_settings())
-
+def read_local_diff() -> str:
     base = os.environ.get("REVIEW_BASE", "HEAD")
     head = os.environ.get("REVIEW_HEAD")
     cmd = ["git", "diff", "--no-color", base]
@@ -151,6 +155,18 @@ def read_diff() -> str:
         cmd.append(head)
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
     return result.stdout
+
+
+def read_diff() -> str:
+    if not sys.stdin.isatty():
+        stdin_diff = sys.stdin.read()
+        if stdin_diff.strip():
+            return stdin_diff
+
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        return fetch_pr_diff_files(get_github_settings())
+
+    return read_local_diff()
 
 
 def truncate_diff(diff: str, max_chars: int) -> str:
@@ -164,8 +180,8 @@ def truncate_diff(diff: str, max_chars: int) -> str:
 
 
 def get_api_settings() -> tuple[str, str]:
-    base_url = get_env("SAKURA_AI_URL")
-    api_key = get_env("SAKURA_AI_API_KEY")
+    base_url = get_env("LLM_API_BASE_URL")
+    api_key = get_env("LLM_API_KEY")
     endpoint = f"{base_url.rstrip('/')}/chat/completions"
     return endpoint, api_key
 
@@ -209,6 +225,7 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
         endpoint,
         method="POST",
         token=api_key,
+        auth_header="apiKey",
         data=payload,
         accept="application/json",
     )
@@ -216,6 +233,11 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
     if debug:
         print(f"status: {status}", file=sys.stderr)
         print(response_body, file=sys.stderr)
+
+    if status < 200 or status >= 300:
+        raise ValueError(
+            f"Review API request failed with status {status}: {response_body}"
+        )
 
     data = json.loads(response_body)
     choices = data.get("choices")
@@ -235,11 +257,7 @@ def review_diff(endpoint: str, api_key: str, model: str, diff: str, debug: bool)
 
 
 def build_review_body(review: str) -> str:
-    return (
-        f"{REVIEW_HEADER}\n"
-        f"## AI Review\n\n"
-        f"{review}\n"
-    )
+    return f"{REVIEW_HEADER}\n## AI Review\n\n{review}\n"
 
 
 def submit_pr_review(settings: dict, body: str) -> None:
