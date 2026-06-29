@@ -19,6 +19,14 @@ The workflow also uses the default `GITHUB_TOKEN`.
 
 `.github/workflows/review.yaml` is triggered manually with `workflow_dispatch`.
 
+The workflow requires these token permissions:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+```
+
 1. Open the repository on GitHub.
 2. Go to `Actions`.
 3. Select the review workflow.
@@ -27,19 +35,35 @@ The workflow also uses the default `GITHUB_TOKEN`.
 
 ## Run Locally
 
-Review a local diff:
+### Prerequisites
+
+- [uv](https://docs.astral.sh/uv/) is installed
+
+Install dependencies:
 
 ```bash
-LLM_API_BASE_URL="https://example.com" \
-LLM_API_KEY="..." \
-uv run python main.py
+uv sync
 ```
 
-Review a provided diff:
+Create a local `.env` file. It is ignored by Git.
 
 ```bash
-git diff main...HEAD | \
-LLM_API_BASE_URL="https://example.com" \
-LLM_API_KEY="..." \
-uv run python main.py
+LLM_API_BASE_URL=https://example.com
+LLM_API_KEY=sk-xxxxx
+```
+
+### Review Repository Changes
+
+Automatically reviews the current Git diff in this repository:
+
+```bash
+uv run --env-file .env python main.py
+```
+
+### Review Diff From Stdin
+
+Reviews a diff passed through standard input:
+
+```bash
+git diff main...HEAD | uv run --env-file .env python main.py
 ```
