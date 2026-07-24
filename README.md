@@ -4,6 +4,34 @@ OpenAI 互換の chat completions API を使って、GitHub Pull Request の差�
 
 GitHub Actions から PR 番号を指定してワークフローを手動実行すると、PR の差分を LLM に渡してレビューを生成し、結果を PR のレビューコメントとして投稿します。
 
+## レビューの仕組み
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as ユーザー
+    participant Actions as GitHub Actions
+    participant App as レビューアプリ（main.py）
+    participant GitHub as GitHub API
+    participant LLM as LLM API（OpenAI 互換）
+
+    User->>Actions: ワークフロー実行（workflow_dispatch / pull_request イベント / 他リポジトリから uses）
+    Actions->>Actions: uv sync --frozen --no-dev
+    Actions->>App: uv run python main.py
+    Note over App: ローカル実行時は diff を標準入力または git diff から取得
+    App->>GitHub: GET /repos/{owner}/{repo}/pulls/{pr}/files（ページネーションで全変更ファイルを取得）
+    GitHub-->>App: 変更ファイル一覧（patch 付き）
+    App->>App: unified diff を組み立てて MAX_DIFF_CHARS に切り詰め
+    App->>LLM: POST /chat/completions（システムプロンプト + diff）
+    LLM-->>App: レビューコメント（日本語 Markdown）
+    alt GitHub Actions 上で実行
+        App->>GitHub: POST /repos/{owner}/{repo}/pulls/{pr}/reviews（event: COMMENT）
+        GitHub-->>User: PR にレビューコメントを投稿
+    else ローカルで実行
+        App-->>User: レビュー本文を標準出力に表示
+    end
+```
+
 ## Features
 
 - GitHub Pull Request の変更ファイルから diff を取得（ページネーション対応）
