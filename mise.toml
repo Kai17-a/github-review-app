@@ -1,0 +1,31 @@
+[tools]
+uv = "0.11.29"
+
+[tasks.sync]
+description = "依存関係をインストールする（dev 含む）"
+run = "uv sync"
+
+[tasks.format]
+description = "コードをフォーマットする"
+run = "uv run ruff format ."
+
+[tasks.lint]
+description = "lint を実行して自動修正する"
+run = "uv run ruff check --fix ."
+
+[tasks.test]
+description = "テストを実行する"
+run = "uv run pytest"
+
+[tasks.typecheck]
+description = "型チェックを実行する"
+run = "uv run ty check"
+
+[tasks.check]
+description = "format / lint / 型チェック / テストを一括検証する（CI 相当・ファイルは変更しない）"
+run = [
+    "uv run ruff format --check .",
+    "uv run ruff check .",
+    "uv run ty check",
+    "uv run pytest -q",
+]
