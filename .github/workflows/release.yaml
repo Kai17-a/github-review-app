@@ -1,0 +1,33 @@
+name: Release
+
+# vX.Y.Z 形式のタグが push されたら、メジャーバージョンタグ（vX）を
+# そのコミットへ付け替える。利用側は `@v1` のようにメジャータグを指定するだけで
+# 最新の v1 系リリースを使い続けられる。
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  update-major-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update major version tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::notice::tag $RELEASE_TAG is not a semver tag; skipping"
+            exit 0
+          fi
+          major="${RELEASE_TAG%%.*}"
+          git tag --force "$major" "$RELEASE_TAG"
+          git push --force origin "$major"
+          echo "updated $major -> $RELEASE_TAG"

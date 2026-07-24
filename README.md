@@ -33,6 +33,7 @@ src/github_review_app/
   prompts.py                    # LLM へのプロンプト（デフォルトのシステムプロンプト）
 tests/                          # pytest テスト
 .github/workflows/review.yaml   # このリポジトリ用の手動実行ワークフロー（action.yml を利用）
+.github/workflows/release.yaml  # リリースタグ push 時にメジャータグを更新するワークフロー
 mise.toml                       # 開発用タスク定義
 ```
 
@@ -153,6 +154,18 @@ jobs:
 ### バージョン指定について
 
 `@v1` はメジャーバージョンのタグです。最新の開発版を使いたい場合は `@main` も指定できます。
+
+## Release
+
+`vX.Y.Z` 形式のタグを push すると、`.github/workflows/release.yaml` が
+メジャーバージョンタグ（例: `v1`）をそのコミットへ自動的に付け替えます。
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0   # => v1 タグがこのコミットを指すよう自動更新される
+```
+
+利用側は `@v1` を指定しておけば、以降の v1 系リリースを自動的に追随します。
 
 ## Environment Variables
 
