@@ -16,15 +16,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: ./
         with:
-          enable-cache: true
-      - run: uv sync --frozen --no-dev
-      - run: uv run python main.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          LLM_API_BASE_URL: ${{ secrets.LLM_API_BASE_URL }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}
-          REVIEW_SYSTEM_PROMPT: ${{ vars.REVIEW_SYSTEM_PROMPT }}
+          pr_number: ${{ inputs.pr_number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          llm_api_base_url: ${{ secrets.LLM_API_BASE_URL }}
+          llm_api_key: ${{ secrets.LLM_API_KEY }}
+          review_model: ${{ vars.REVIEW_MODEL || 'preview/Kimi-K2.6' }}
+          review_system_prompt: ${{ vars.REVIEW_SYSTEM_PROMPT }}

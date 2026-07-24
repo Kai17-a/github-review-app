@@ -1,0 +1,72 @@
+name: AI Review
+description: "OpenAI 互換 API を使って Pull Request を自動レビューする"
+
+inputs:
+  pr_number:
+    description: "レビュー対象の Pull Request 番号（省略時はイベントペイロードから取得）"
+    required: false
+    default: ""
+  repository:
+    description: "owner/repo 形式の対象リポジトリ（省略時は呼び出し元リポジトリ）"
+    required: false
+    default: ""
+  github_token:
+    description: "PR 情報取得とレビュー投稿に使う GitHub トークン"
+    required: true
+  llm_api_base_url:
+    description: "OpenAI 互換 API の base URL（例: https://example.com/v1）"
+    required: true
+  llm_api_key:
+    description: "OpenAI 互換 API の API key"
+    required: true
+  review_model:
+    description: "使用するモデル名"
+    required: false
+    default: "preview/Kimi-K2.6"
+  review_system_prompt:
+    description: "レビュー用システムプロンプト（省略時はデフォルト）"
+    required: false
+    default: ""
+  max_diff_chars:
+    description: "LLM に渡す diff の最大文字数"
+    required: false
+    default: "12000"
+  llm_timeout:
+    description: "LLM API のタイムアウト秒数"
+    required: false
+    default: "120"
+  review_debug:
+    description: "'1' を指定すると API request / response をログ出力"
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: false
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: uv sync --frozen --no-dev
+    - name: Run AI review
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: uv run python main.py
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        GITHUB_REPOSITORY: ${{ inputs.repository || github.repository }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        LLM_API_BASE_URL: ${{ inputs.llm_api_base_url }}
+        LLM_API_KEY: ${{ inputs.llm_api_key }}
+        REVIEW_MODEL: ${{ inputs.review_model }}
+        REVIEW_SYSTEM_PROMPT: ${{ inputs.review_system_prompt }}
+        MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
+        LLM_TIMEOUT: ${{ inputs.llm_timeout }}
+        REVIEW_DEBUG: ${{ inputs.review_debug }}
+
+branding:
+  icon: check-circle
+  color: blue
