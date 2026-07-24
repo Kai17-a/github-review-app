@@ -3,9 +3,8 @@ import os
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
+
+import requests
 
 SYSTEM_PROMPT = """\
 あなたは経験豊富なコードレビュアーです。提供された git diff をレビューし、以下の観点でフィードバックしてください。
@@ -41,9 +40,9 @@ def http_request(
     token: str | None = None,
     auth_header: str = "Authorization",
     data: dict | None = None,
+    params: dict | None = None,
     accept: str = "application/vnd.github+json",
 ) -> tuple[int, str]:
-    body = None
     headers = {"Accept": accept}
     if token:
         if not isinstance(auth_header, str) or not _VALID_AUTH_HEADER.fullmatch(
@@ -66,12 +65,22 @@ def http_request(
     )
 
     try:
-        with urllib.request.urlopen(request) as response:
-            return response.status, response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        error_body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"request failed with {exc.code}: {error_body}") from exc
-    except urllib.error.URLError as exc:
+        response = requests.request(
+            method,
+            url,
+            headers=headers,
+            json=data,
+            params=params,
+            timeout=60,
+        )
+        response.raise_for_status()
+        return response.status_code, response.text
+    except requests.HTTPError as exc:
+        response = exc.response
+        status_code = response.status_code if response is not None else "unknown"
+        error_body = response.text if response is not None else str(exc)
+        raise RuntimeError(f"request failed with {status_code}: {error_body}") from exc
+    except requests.RequestException as exc:
         raise RuntimeError(f"failed to send request: {exc}") from exc
 
 
@@ -118,9 +127,12 @@ def fetch_pr_diff_files(settings: dict) -> str:
     patches = []
     page = 1
     while True:
-        params = urllib.parse.urlencode({"per_page": 100, "page": page})
-        url = f"{api_url}/repos/{owner_repo}/pulls/{pull_number}/files?{params}"
-        _, body = http_request(url, token=token)
+        url = f"{api_url}/repos/{owner_repo}/pulls/{pull_number}/files"
+        _, body = http_request(
+            url,
+            token=token,
+            params={"per_page": 100, "page": page},
+        )
         files = json.loads(body)
         if not isinstance(files, list):
             raise RuntimeError("GitHub files API returned an unexpected payload.")
